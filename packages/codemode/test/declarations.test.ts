@@ -220,6 +220,32 @@ describe("schemaToType", () => {
 		expect(schemaToType({ type: "array" })).toBe("unknown[]");
 	});
 
+	// Regression for https://github.com/earendil-works/pi/issues/12156
+	it("renders constraints on homogeneous array items", () => {
+		const schema = {
+			type: "object",
+			properties: {
+				matrix: {
+					type: "array",
+					items: {
+						type: "array",
+						minItems: 2,
+						items: { type: "integer", minimum: 1 },
+					},
+				},
+				myArray: {
+					type: "array",
+					minItems: 1,
+					maxItems: 5,
+					items: { type: "string", maxLength: 300 },
+				},
+			},
+		};
+		expect(schemaToType(schema)).toBe(
+			"{\n  // @items.minItems 2 @items.items.integer @items.items.minimum 1\n  matrix?: Array<Array<number>>;\n  // @minItems 1 @maxItems 5 @items.maxLength 300\n  myArray?: Array<string>;\n}",
+		);
+	});
+
 	it("renders types over the budget as unknown", () => {
 		const properties = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`field${i}`, { type: "string" }]));
 		const schema = { type: "object", properties };

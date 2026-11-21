@@ -305,6 +305,17 @@ function constraintTags(schema: unknown): string {
 		tags.push(`@default ${JSON.stringify(property.default)}`);
 	}
 	if (property.deprecated === true) tags.push("@deprecated");
+	if (
+		property.type === "array" &&
+		typeof property.items === "object" &&
+		property.items !== null &&
+		!Array.isArray(property.items)
+	) {
+		const itemTags = constraintTags(property.items);
+		if (itemTags) {
+			tags.push(itemTags.replace(/(^| )@([A-Za-z][\w-]*)/g, "$1@items.$2"));
+		}
+	}
 	return tags
 		.filter((tag) => tag.length <= MAX_TAG_CHARS)
 		.map((tag) => tag.replace(LINE_TERMINATORS, (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`))
